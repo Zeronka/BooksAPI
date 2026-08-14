@@ -1,9 +1,10 @@
 from app.schemas import author as author_schemas
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.repository import author as author_repository
 from app.repository import book as book_repository
+
+from app.exceptions import author as author_exceptions
 
 def create(
         author_data: author_schemas.AuthorCreate,
@@ -12,10 +13,7 @@ def create(
     existing_author = author_repository.get_by_name(author_data.name, db)
 
     if existing_author:
-        raise HTTPException(
-            status_code=409,
-            detail="Author alredy exist"
-        )
+        raise author_exceptions.AuthorAlreadyExistsError("Author already exists")
 
     return author_repository.create(author_data, db)
 
@@ -30,10 +28,7 @@ def get_author(
     existing_author = author_repository.get_by_id(author_id, db)
 
     if not existing_author:
-        raise HTTPException(
-            status_code=404,
-            detail="Author not found"
-        )
+        raise author_exceptions.AuthorNotFoundError("Author not found")
 
     return existing_author
 
@@ -45,10 +40,7 @@ def update(
     existing_author = author_repository.get_by_id(author_id, db)
 
     if not existing_author:
-        raise HTTPException(
-            status_code=404,
-            detail="Author not found"
-        )
+        raise author_exceptions.AuthorNotFoundError("Author not found")
 
     author_with_same_name = author_repository.get_by_name(author.name, db)
 
@@ -56,10 +48,7 @@ def update(
         author_with_same_name
         and existing_author.id != author_with_same_name.id
     ): 
-        raise HTTPException(
-            status_code=409,
-            detail="Author already exists"
-        )
+        raise author_exceptions.AuthorAlreadyExistsError("Author already exists")
                 
     return author_repository.update(existing_author,author,db)
 
@@ -70,17 +59,11 @@ def delete(
     author = author_repository.get_by_id(author_id, db)
 
     if not author:
-        raise HTTPException(
-            status_code=404,
-            detail="Author not found"
-        )
+        raise author_exceptions.AuthorNotFoundError("Author not found")
 
     existing_book = book_repository.author_has_books(author_id, db)
 
     if existing_book:
-        raise HTTPException(
-            status_code=409,
-            detail="Author has books"
-        )
+        raise author_exceptions.AuthorHasBooksError("Author has books")
 
     return author_repository.delete(author, db)

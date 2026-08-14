@@ -2,20 +2,20 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool  # ← добавь
 
 from app.main import app
 from app.database.database import Base, get_db
 
-# SQLite в памяти для тестов
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,  # ← вот это ключевое
 )
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Создаём таблицы один раз перед всеми тестами
-Base.metadata.create_all(bind=engine)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def override_get_db():
     db = TestingSessionLocal()
@@ -24,14 +24,11 @@ def override_get_db():
     finally:
         db.close()
 
-# Подменяем зависимость
 app.dependency_overrides[get_db] = override_get_db
 
 @pytest.fixture(scope="function")
 def client():
-    # Очищаем таблицы перед каждым тестом
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
-    
     with TestClient(app) as c:
         yield c

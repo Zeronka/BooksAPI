@@ -1,10 +1,12 @@
-from fastapi import Query, Depends, status, APIRouter
+from fastapi import Query, Depends, status, APIRouter, HTTPException
 
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.schemas import book as book_schemas
 from app.service import book as service
+from app.exceptions.book import BookNotFoundError, BookInvalidYearsError, BookAlreadyExistsError
+from app.exceptions.author import AuthorNotFoundError
 
 router = APIRouter(
     tags=["Books"]
@@ -20,7 +22,23 @@ def create(
     book: book_schemas.BookCreate,
     db: Session = Depends(get_db)
     ):
-    return service.create(book, db)
+    try:
+        return service.create(book, db)
+    except BookAlreadyExistsError:
+        raise HTTPException(
+            status_code=409,
+            detail="Book already exists"
+        )
+    except BookInvalidYearsError:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid years"
+        )
+    except AuthorNotFoundError:
+        raise HTTPException(
+            status_code=404,
+            detail="Author not found"
+        )
 
 @router.get(
         "/books",
@@ -47,7 +65,7 @@ def search_by_title(title: str, db: Session = Depends(get_db)):
         summary="Get books by author",
         response_model=list[book_schemas.BookListResponse]
         )
-def get_books_by_author(
+def get_books_by_author_id(
     author_id: int,
     skip: int = Query(default=0, ge=0, description="Number of records to skip"),
     limit: int = Query(default=10, ge=1, le=100, description="Maximum number of books returned"),
@@ -64,7 +82,13 @@ def get_book(
     book_id: int,
     db: Session = Depends(get_db)
     ):
-    return service.get_book(book_id, db)
+    try:
+        return service.get_book(book_id, db)
+    except BookNotFoundError:
+        raise HTTPException(
+            status_code=404,
+            detail="Book not found"
+        )
 
 @router.put(
         "/books/{book_id}",
@@ -76,7 +100,13 @@ def update(
     book: book_schemas.BookUpdate,
     db: Session = Depends(get_db)
            ):
-    return service.update(book_id, book, db)
+    try:
+        return service.update(book_id, book, db)
+    except BookNotFoundError:
+        raise HTTPException(
+            status_code=404,
+            detail="Book not found"
+        )
 
 @router.delete(
         "/books/{book_id}",
@@ -87,5 +117,11 @@ def delete(
     book_id: int,
     db: Session = Depends(get_db)
            ):
-    return service.delete(book_id, db)
+    try:
+        return service.delete(book_id, db)
+    except BookNotFoundError:
+        raise HTTPException(
+            status_code=404,
+            detail="Book not found"
+        )
 

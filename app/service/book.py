@@ -1,9 +1,11 @@
 from app.schemas import book as book_schemas
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.repository import book as book_repository
 from app.repository import author as author_repository
+
+from app.exceptions import book as book_exceptions
+from app.exceptions import author as author_exceptions
 
 def search_by_title(title: str, db: Session):
     book = book_repository.search_by_title(title, db)
@@ -13,12 +15,6 @@ def search_by_title(title: str, db: Session):
 def get_by_author_id(author_id: int, skip, limit, db: Session):
 
     book = book_repository.get_by_author_id(author_id, skip, limit, db)
-
-    if not book:
-        raise HTTPException(
-            status_code=404,
-            detail="Books not found"
-        )
 
     return book
 
@@ -31,24 +27,15 @@ def create(
     
 
     if book:
-        raise HTTPException(
-            status_code=409,
-            detail="Book already exist"
-        )
+        raise book_exceptions.BookAlreadyExistsError("Book already exists")
     
     if book_data.years > 2026 or book_data.years < 1:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid years"
-        )
+        raise book_exceptions.BookInvalidYearsError("Invalid years")
     
     author = author_repository.get_by_id(book_data.author_id, db)
     
     if not author:
-        raise HTTPException(
-            status_code=404,
-            detail="Author not found"
-        )
+        raise author_exceptions.AuthorNotFoundError("Author not found")
     
 
     return book_repository.create(book_data, db)
@@ -67,10 +54,7 @@ def get_book(
     existing_book = book_repository.get_by_id(book_id, db)
 
     if not existing_book:
-        raise HTTPException(
-            status_code=404,
-            detail="Book not found"
-        )
+        raise book_exceptions.BookNotFoundError("Book not found")
 
     return existing_book
 
@@ -83,10 +67,7 @@ def update(
     existing_book = book_repository.get_by_id(book_id, db)
 
     if not existing_book:
-        raise HTTPException(
-            status_code=404,
-            detail="Book not found"
-        )
+        raise book_exceptions.BookNotFoundError("Book not found")
 
     return book_repository.update(existing_book, book, db)
 
@@ -97,9 +78,6 @@ def delete(
     book = book_repository.get_by_id(book_id, db)
 
     if not book:
-        raise HTTPException(
-            status_code=404,
-            detail="Book not found"
-        )
+        raise book_exceptions.BookNotFoundError("Book not found")
 
     return book_repository.delete(book, db)

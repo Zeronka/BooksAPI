@@ -1,10 +1,12 @@
-from fastapi import status, Query, APIRouter, Depends
+from fastapi import status, Query, APIRouter, Depends, HTTPException
 
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.schemas import author as author_schemas
 from app.service import author as service
+
+from app.exceptions.author import AuthorNotFoundError, AuthorHasBooksError, AuthorAlreadyExistsError
 
 router = APIRouter(
     tags=["Authors"]
@@ -20,7 +22,13 @@ def create(
     author: author_schemas.AuthorCreate,
     db: Session = Depends(get_db)
            ):
-    return service.create(author, db)
+    try:
+        return service.create(author, db)
+    except AuthorAlreadyExistsError:
+        raise HTTPException(
+            status_code=409,
+            detail="Author already exists"
+        )
 
 @router.get(
         "/authors",
@@ -43,7 +51,13 @@ def get_author(
     author_id: int,
     db: Session = Depends(get_db)
             ):
-    return service.get_author(author_id, db)
+    try:
+        return service.get_author(author_id, db)
+    except AuthorNotFoundError:
+        raise HTTPException(
+            status_code=404,
+            detail="Author not found"
+        )
 
 @router.put(
         "/authors/{author_id}",
@@ -52,10 +66,21 @@ def get_author(
             )
 def update(
     author_id: int,
-    author: author_schemas.AuthorCreate,
+    author: author_schemas.AuthorUpdate,
     db: Session = Depends(get_db)
     ):
-    return service.update(author_id, author, db)
+    try:
+        return service.update(author_id, author, db)
+    except AuthorNotFoundError:
+        raise HTTPException(
+            status_code=404,
+            detail="Author not found"
+            )
+    except AuthorAlreadyExistsError:
+        raise HTTPException(
+            status_code=409,
+            detail="Author already exists"
+            )
 
 @router.delete(
         "/authors/{author_id}",
@@ -66,4 +91,9 @@ def delete(
     author_id: int,
     db: Session = Depends(get_db)
            ):
-    return service.delete(author_id, db)
+    try:
+        return service.delete(author_id, db)
+    except AuthorNotFoundError:
+        raise HTTPException(status_code=404, detail="Author not found")
+    except AuthorHasBooksError:
+        raise HTTPException(status_code=409, detail="Author has books")

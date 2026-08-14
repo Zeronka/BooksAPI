@@ -52,7 +52,7 @@ REST API для управления библиотекой (авторы и к�
 
 ## Архитектура
 
-
+```text
 app/
 ├── database/
 │   └── database.py
@@ -73,7 +73,7 @@ app/
 │   ├── test_authors.py
 │   └── test_books.py
 └── main.py
-
+```
 
 ## Быстрый старт
 
