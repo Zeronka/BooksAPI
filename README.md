@@ -143,7 +143,7 @@ pytest -v
 
 ## Деплой
 
-Приложение развёрнуто на Render: https://booksapi-1-hkii.onrender.com/docs
+Приложение развёрнуто на Render: [https://booksapi-1-hkii.onrender.com/docs](https://booksapi-1-hkii.onrender.com/docs)
 
 ## Связь
 
