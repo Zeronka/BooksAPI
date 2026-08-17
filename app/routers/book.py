@@ -4,6 +4,9 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 
+from app.core.deps import get_current_user
+from app.models.user import User
+
 from app.schemas import book as book_schemas
 from app.service import book as service
 
@@ -22,7 +25,8 @@ router = APIRouter(
         )
 def create(
     book: book_schemas.BookCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
     ):
     try:
         return service.create(book, db)
@@ -100,7 +104,8 @@ def get_book(
 def update(
     book_id: int,
     book: book_schemas.BookUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
            ):
     try:
         return service.update(book_id, book, db)
@@ -117,8 +122,13 @@ def update(
         )
 def delete(
     book_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
            ):
+
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin required")
+    
     try:
         return service.delete(book_id, db)
     except BookNotFoundError:

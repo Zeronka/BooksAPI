@@ -4,6 +4,10 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 
+from app.core.deps import get_current_user
+
+from app.models.user import User
+
 from app.schemas import author as author_schemas
 from app.service import author as service
 
@@ -21,7 +25,8 @@ router = APIRouter(
             )
 def create(
     author: author_schemas.AuthorCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
            ):
     try:
         return service.create(author, db)
@@ -68,7 +73,8 @@ def get_author(
 def update(
     author_id: int,
     author: author_schemas.AuthorUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
     ):
     try:
         return service.update(author_id, author, db)
@@ -90,8 +96,13 @@ def update(
                )
 def delete(
     author_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
            ):
+
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin required")
+    
     try:
         return service.delete(author_id, db)
     except AuthorNotFoundError:
