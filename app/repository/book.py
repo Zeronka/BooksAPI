@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
 from app.models.book import Book
-
 from app.schemas import book as book_schemas
+
 
 def author_has_books(
         author_id: int,

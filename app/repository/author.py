@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 
 from app.models.author import Author
-
 from app.schemas import author as author_schemas
 
 

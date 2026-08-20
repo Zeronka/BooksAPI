@@ -1,10 +1,10 @@
-from app.schemas import author as author_schemas
 from sqlalchemy.orm import Session
 
+from app.exceptions import author as author_exceptions
 from app.repository import author as author_repository
 from app.repository import book as book_repository
+from app.schemas import author as author_schemas
 
-from app.exceptions import author as author_exceptions
 
 def create(
         author_data: author_schemas.AuthorCreate,

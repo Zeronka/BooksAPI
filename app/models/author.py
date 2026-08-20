@@ -1,7 +1,8 @@
-from app.database.database import Base
-
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
+
+from app.database.database import Base
+
 
 class Author(Base):
     __tablename__ = "authors"

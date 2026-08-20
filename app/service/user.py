@@ -1,13 +1,11 @@
-from app.schemas import user as user_schemas
 from sqlalchemy.orm import Session
 
-from app.repository import user as user_repository
-
-from app.exceptions import user as user_exceptions
-
-from app.models.user import User
-
 from app.core.security import verify_password
+from app.exceptions import user as user_exceptions
+from app.models.user import User
+from app.repository import user as user_repository
+from app.schemas import user as user_schemas
+
 
 def register_user(
         user_data: user_schemas.UserCreate,

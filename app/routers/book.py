@@ -1,17 +1,17 @@
-from fastapi import Query, Depends, status, APIRouter, HTTPException
-
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.database.database import get_db
-
 from app.core.deps import get_current_user
+from app.database.database import get_db
+from app.exceptions.author import AuthorNotFoundError
+from app.exceptions.book import (
+    BookAlreadyExistsError,
+    BookInvalidYearsError,
+    BookNotFoundError,
+)
 from app.models.user import User
-
 from app.schemas import book as book_schemas
 from app.service import book as service
-
-from app.exceptions.book import BookNotFoundError, BookInvalidYearsError, BookAlreadyExistsError
-from app.exceptions.author import AuthorNotFoundError
 
 router = APIRouter(
     tags=["Books"]
